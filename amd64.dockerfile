@@ -45,7 +45,7 @@
             /var/log/vernemq
 
 # :: Volumes
-    VOLUME ["/vernemq/data", "/vernemq/log", "/vernemq/etc"]
+    VOLUME ["/vernemq/data", "/vernemq/log", "/vernemq/etc", "/vernemq/ssl"]
 
 # :: Monitor
     HEALTHCHECK CMD vernemq ping | grep -q pong
