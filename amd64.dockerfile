@@ -34,6 +34,9 @@
     COPY ./source/entrypoint.sh /usr/local/bin/entrypoint.sh
     RUN chmod +x /usr/local/bin/entrypoint.sh
 
+    # :: missing favicon
+        COPY ./source/lib/vmq_server/priv/static /vernemq/lib/vmq_server-$VERNEMQ_VERSION/priv/static/
+
     # :: docker -u 1000:1000 (no root initiative)
         RUN chown -R vernemq:vernemq \
             /vernemq \
