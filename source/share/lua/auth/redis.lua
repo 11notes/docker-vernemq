@@ -2,7 +2,7 @@ require "auth/auth_commons"
 
 function auth_on_register(reg)
     if reg.username ~= nil and reg.password ~= nil then
-        key = json.encode({reg.username, reg.client_id})
+        key = "client:" .. reg.username ..":" .. reg.client_id
         res = redis.cmd(pool, "GET " .. key)
         if res then
             res = json.decode(res)
@@ -21,6 +21,11 @@ function auth_on_register(reg)
                     }
                 }
             end
+        else
+            -- save unknown clients for 15' to db
+            key = "unknown:" .. reg.username ..":" .. reg.client_id
+            value = json.encode({["username"] = reg.username, ["client_id"] = reg.client_id, ["addr"] = reg.addr})
+            redis.cmd(pool, "SETEX " .. key .. " 900 " .. value)
         end
     end
     return false
