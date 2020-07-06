@@ -6,13 +6,10 @@ IP_ADDRESS=${DOCKER_IP_ADDRESS:-${IP_ADDRESS}}
 # Ensure the Erlang node name is set correctly
 if env | grep "DOCKER_VERNEMQ_NODENAME" -q; then
     sed -i.bak -r "s/-name VerneMQ@.+/-name VerneMQ@${DOCKER_VERNEMQ_NODENAME}/" /vernemq/etc/vm.args
-else
-    if [ -n "$DOCKER_VERNEMQ_SWARM" ]; then
-        NODENAME=$(hostname -i)
-        sed -i.bak -r "s/VerneMQ@.+/VerneMQ@${NODENAME}/" /etc/vernemq/vm.args
-    else
-        sed -i.bak -r "s/-name VerneMQ@.+/-name VerneMQ@${IP_ADDRESS}/" /vernemq/etc/vm.args
-    fi
+fi
+
+if env | grep "DOCKER_VERNEMQ_DISTRIBUTED_COOKIE" -q; then
+    sed -i.bak -r "s/-setcookie .+/-setcookie ${DOCKER_VERNEMQ_DISTRIBUTED_COOKIE}/" /vernemq/etc/vm.args
 fi
 
 if env | grep "DOCKER_VERNEMQ_DISCOVERY_NODE" -q; then
@@ -36,49 +33,6 @@ if env | grep "DOCKER_VERNEMQ_DISCOVERY_NODE" -q; then
 
     sed -i.bak -r "/-eval.+/d" /vernemq/etc/vm.args 
     echo "-eval \"vmq_server_cmd:node_join('VerneMQ@$discovery_node')\"" >> /vernemq/etc/vm.args
-fi
-
-# If you encounter "SSL certification error (subject name does not match the host name)", you may try to set DOCKER_VERNEMQ_KUBERNETES_INSECURE to "1".
-insecure=""
-if env | grep "DOCKER_VERNEMQ_KUBERNETES_INSECURE" -q; then
-    insecure="--insecure"
-fi
-
-if env | grep "DOCKER_VERNEMQ_DISCOVERY_KUBERNETES" -q; then
-    DOCKER_VERNEMQ_KUBERNETES_CLUSTER_NAME=${DOCKER_VERNEMQ_KUBERNETES_CLUSTER_NAME:-cluster.local}
-    # Let's get the namespace if it isn't set
-    DOCKER_VERNEMQ_KUBERNETES_NAMESPACE=${DOCKER_VERNEMQ_KUBERNETES_NAMESPACE:-`cat /var/run/secrets/kubernetes.io/serviceaccount/namespace`}
-    # Let's set our nodename correctly
-    VERNEMQ_KUBERNETES_SUBDOMAIN=${DOCKER_VERNEMQ_KUBERNETES_SUBDOMAIN:-$(curl -X GET $insecure --cacert /var/run/secrets/kubernetes.io/serviceaccount/ca.crt https://kubernetes.default.svc.$DOCKER_VERNEMQ_KUBERNETES_CLUSTER_NAME/api/v1/namespaces/$DOCKER_VERNEMQ_KUBERNETES_NAMESPACE/pods?labelSelector=$DOCKER_VERNEMQ_KUBERNETES_LABEL_SELECTOR -H "Authorization: Bearer $(cat /var/run/secrets/kubernetes.io/serviceaccount/token)" | jq '.items[0].spec.subdomain' | sed 's/"//g' | tr '\n' '\0')}
-    if [ $VERNEMQ_KUBERNETES_SUBDOMAIN == "null" ]; then
-        VERNEMQ_KUBERNETES_HOSTNAME=${MY_POD_NAME}.${DOCKER_VERNEMQ_KUBERNETES_NAMESPACE}.svc.${DOCKER_VERNEMQ_KUBERNETES_CLUSTER_NAME}
-    else
-        VERNEMQ_KUBERNETES_HOSTNAME=${MY_POD_NAME}.${VERNEMQ_KUBERNETES_SUBDOMAIN}.${DOCKER_VERNEMQ_KUBERNETES_NAMESPACE}.svc.${DOCKER_VERNEMQ_KUBERNETES_CLUSTER_NAME}
-    fi
-
-    sed -i.bak -r "s/VerneMQ@.+/VerneMQ@${VERNEMQ_KUBERNETES_HOSTNAME}/" /vernemq/etc/vm.args
-    # Hack into K8S DNS resolution (temporarily)
-    kube_pod_names=$(curl -X GET $insecure --cacert /var/run/secrets/kubernetes.io/serviceaccount/ca.crt https://kubernetes.default.svc.$DOCKER_VERNEMQ_KUBERNETES_CLUSTER_NAME/api/v1/namespaces/$DOCKER_VERNEMQ_KUBERNETES_NAMESPACE/pods?labelSelector=$DOCKER_VERNEMQ_KUBERNETES_LABEL_SELECTOR -H "Authorization: Bearer $(cat /var/run/secrets/kubernetes.io/serviceaccount/token)" | jq '.items[].spec.hostname' | sed 's/"//g' | tr '\n' ' ')
-    for kube_pod_name in $kube_pod_names;
-    do
-        if [ $kube_pod_name == "null" ]
-            then
-                echo "Kubernetes discovery selected, but no pods found. Maybe we're the first?"
-                echo "Anyway, we won't attempt to join any cluster."
-                break
-        fi
-        if [ $kube_pod_name != $MY_POD_NAME ]
-            then
-                echo "Will join an existing Kubernetes cluster with discovery node at ${kube_pod_name}.${VERNEMQ_KUBERNETES_SUBDOMAIN}.${DOCKER_VERNEMQ_KUBERNETES_NAMESPACE}.svc.${DOCKER_VERNEMQ_KUBERNETES_CLUSTER_NAME}"
-                echo "-eval \"vmq_server_cmd:node_join('VerneMQ@${kube_pod_name}.${VERNEMQ_KUBERNETES_SUBDOMAIN}.${DOCKER_VERNEMQ_KUBERNETES_NAMESPACE}.svc.${DOCKER_VERNEMQ_KUBERNETES_CLUSTER_NAME}')\"" >> /vernemq/etc/vm.args
-                break
-        fi
-    done
-fi
-
-if [ -f /vernemq/etc/vernemq.conf ]; then
-    sed -i -r "s/###IPADDRESS###/${IP_ADDRESS}/" /vernemq/etc/vernemq.conf
-    sed -i -r "s/###COOKIE###/VerneMQ/" /vernemq/etc/vernemq.conf
 fi
 
 # Check configuration file
