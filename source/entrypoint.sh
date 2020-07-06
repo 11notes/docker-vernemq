@@ -14,25 +14,7 @@ fi
 
 if env | grep "DOCKER_VERNEMQ_DISCOVERY_NODE" -q; then
     discovery_node=$DOCKER_VERNEMQ_DISCOVERY_NODE
-    if [ -n "$DOCKER_VERNEMQ_SWARM" ]; then
-        tmp=''
-        while [[ -z "$tmp" ]]; do
-            tmp=$(getent hosts tasks.$discovery_node | awk '{print $1}' | head -n 1)
-            sleep 1
-        done
-        discovery_node=$tmp
-    fi
-    if [ -n "$DOCKER_VERNEMQ_COMPOSE" ]; then
-        tmp=''
-        while [[ -z "$tmp" ]]; do
-            tmp=$(getent hosts $discovery_node | awk '{print $1}' | head -n 1)
-            sleep 1
-        done
-        discovery_node=$tmp
-    fi
-
-    sed -i.bak -r "/-eval.+/d" /vernemq/etc/vm.args 
-    echo "-eval \"vmq_server_cmd:node_join('VerneMQ@$discovery_node')\"" >> /vernemq/etc/vm.args
+    echo $'\n-eval "vmq_server_cmd:node_join('VerneMQ@${discovery_node}')"' >> /vernemq/etc/vm.args
 fi
 
 # Check configuration file
