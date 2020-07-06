@@ -9,4 +9,5 @@
 -smp enable
 -name VerneMQ@127.0.0.1
 -setcookie vmq
+-eval ""
 +zdbbl 32768
