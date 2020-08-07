@@ -14,7 +14,7 @@ fi
 if env | grep "DOCKER_VERNEMQ_DISCOVERY_NODE" -q; then
     sed -i.bak -r "s/-eval.+/-eval \"vmq_server_cmd:node_join('VerneMQ@$DOCKER_VERNEMQ_DISCOVERY_NODE')\"/" /vernemq/etc/vm.args
 else
-    sed '/^\eval.+/d' /vernemq/etc/vm.args
+    sed -i.bak -r '/^-eval/d' /vernemq/etc/vm.args
 fi
 
 # Check configuration file
