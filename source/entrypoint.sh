@@ -1,7 +1,6 @@
 #!/usr/bin/env bash
 
-IP_ADDRESS=$(ip -4 addr show ${DOCKER_NET_INTERFACE:-eth0} | grep -oE '[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}' | sed -e "s/^[[:space:]]*//" | head -n 1)
-IP_ADDRESS=${DOCKER_IP_ADDRESS:-${IP_ADDRESS}}
+IP_ADDRESS=$(ip -4 addr show ${NET_INTERFACE} | grep -oE '[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}' | sed -e "s/^[[:space:]]*//" | head -n 1)
 
 # Ensure the Erlang node name is set correctly
 if env | grep "DOCKER_VERNEMQ_NODENAME" -q; then
@@ -35,15 +34,7 @@ siguser1_handler() {
 # SIGTERM-handler
 sigterm_handler() {
     if [ $pid -ne 0 ]; then
-        # this will stop the VerneMQ process, but first drain the node from all existing client sessions (-k)
-        if [ -n "$VERNEMQ_KUBERNETES_HOSTNAME" ]; then
-            terminating_node_name=VerneMQ@$VERNEMQ_KUBERNETES_HOSTNAME
-        elif [ -n "$DOCKER_VERNEMQ_SWARM" ]; then
-            terminating_node_name=VerneMQ@$(hostname -i)
-        else
-            terminating_node_name=VerneMQ@$IP_ADDRESS
-        fi
-        /vernemq/bin/vmq-admin cluster leave node=$terminating_node_name -k > /dev/null
+        /vernemq/bin/vmq-admin cluster leave node=VerneMQ@${DOCKER_VERNEMQ_NODENAME} -k -i 5 -t 60 > /dev/null
         /vernemq/bin/vmq-admin node stop > /dev/null
         kill -s TERM ${pid}
         exit 0
