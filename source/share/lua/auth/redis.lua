@@ -1,7 +1,7 @@
 require "auth/auth_commons"
 
 function auth_on_register(reg)
-    if reg.username ~= nil and reg.password ~= nil then
+    if reg.username ~= nil and reg.password ~= nil and reg.client_id ~= nil then
         key = "client:" .. reg.username ..":" .. reg.client_id
         res = redis.cmd(pool, "GET " .. key)
         if res then
