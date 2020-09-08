@@ -1,6 +1,6 @@
 # :: Header
     FROM alpine:3.12
-    ENV VERNEMQ_VERSION="1.10.4"
+    ENV VERNEMQ_VERSION="1.10.4.1"
 
 # :: Run
     USER root
