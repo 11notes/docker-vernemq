@@ -1,8 +1,8 @@
-#!/usr/bin/env bash
+#!/bin/ash
+sed -i.bak -r "s/href=\"status\//href=\"\//" /lib/vmq_server-$VERNEMQ_VERSION/priv/static/index.html
+sed -i.bak -r "s/src=\"status\//src=\"\//" /lib/vmq_server-$VERNEMQ_VERSION/priv/static/index.html
 
 IP_ADDRESS=$(ip -4 addr show ${NET_INTERFACE} | grep -oE '[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}' | sed -e "s/^[[:space:]]*//" | head -n 1)
-
-# Ensure the Erlang node name is set correctly
 if env | grep "DOCKER_VERNEMQ_NODENAME" -q; then
     sed -i.bak -r "s/-name VerneMQ@.+/-name VerneMQ@${DOCKER_VERNEMQ_NODENAME}/" /vernemq/etc/vm.args
 fi
@@ -17,7 +17,6 @@ else
     sed -i.bak -r '/^-eval/d' /vernemq/etc/vm.args
 fi
 
-# Check configuration file
 /vernemq/bin/vernemq config generate 2>&1 > /dev/null | tee /tmp/config.out | grep error
 
 if [ $? -ne 1 ]; then
