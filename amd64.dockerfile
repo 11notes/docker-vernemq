@@ -1,41 +1,39 @@
 # :: Header
-    FROM alpine:3.12
-    ENV VERNEMQ_VERSION="1.10.4.1"
+    FROM alpine:3.12.1
+    ENV VERNEMQ_VERSION="1.11.0"
+
 
 # :: Run
     USER root
 
-    ENV PATH="/vernemq/bin:$PATH"
-    RUN apk --update --no-cache add \
-            ncurses-libs \
-            openssl \
-            libstdc++ \
-            jq \
-            curl \
-            bash \
-            snappy-dev \
-        && addgroup --gid 1000 vernemq \
-        && adduser --uid 1000 -H -D -G vernemq -h /vernemq vernemq \
-        && install -d -o vernemq -g vernemq /vernemq \
-        && mkdir -p /vernemq/ssl/mqtt
+    # :: prepare
+        ENV PATH="/vernemq/bin:$PATH"
+        RUN apk --update --no-cache add \
+                ncurses-libs \
+                openssl \
+                libstdc++ \
+                jq \
+                curl \
+                bash \
+                snappy-dev \
+            && addgroup --gid 1000 vernemq \
+            && adduser --uid 1000 -H -D -G vernemq -h /vernemq vernemq \
+            && install -d -o vernemq -g vernemq /vernemq \
+            && mkdir -p /vernemq/ssl/mqtt
 
-    WORKDIR /vernemq
+    # :: install
+        WORKDIR /vernemq
 
-    ADD https://github.com/vernemq/vernemq/releases/download/$VERNEMQ_VERSION/vernemq-$VERNEMQ_VERSION.alpine.tar.gz /tmp
+        ADD https://github.com/vernemq/vernemq/releases/download/$VERNEMQ_VERSION/vernemq-$VERNEMQ_VERSION.alpine.tar.gz /tmp
 
-    RUN tar -xzvf /tmp/vernemq-$VERNEMQ_VERSION.alpine.tar.gz \
-        && rm /tmp/vernemq-$VERNEMQ_VERSION.alpine.tar.gz \
-        && ln -s /vernemq/etc /etc/vernemq \
-        && ln -s /vernemq/data /var/lib/vernemq \
-        && ln -s /vernemq/log /var/log/vernemq
+        RUN tar -xzvf /tmp/vernemq-$VERNEMQ_VERSION.alpine.tar.gz \
+            && rm /tmp/vernemq-$VERNEMQ_VERSION.alpine.tar.gz \
+            && ln -s /vernemq/etc /etc/vernemq \
+            && ln -s /vernemq/data /var/lib/vernemq \
+            && ln -s /vernemq/log /var/log/vernemq
 
-    COPY ./source/share /vernemq/share
-    COPY ./source/etc /vernemq/etc
-    COPY ./source/entrypoint.sh /usr/local/bin/entrypoint.sh
-    RUN chmod +x /usr/local/bin/entrypoint.sh
-
-    # :: missing favicon
-        COPY ./source/lib/vmq_server/priv/static /vernemq/lib/vmq_server-$VERNEMQ_VERSION/priv/static/
+    # :: copy root filesystem changes
+        COPY ./rootfs /    
 
     # :: docker -u 1000:1000 (no root initiative)
         RUN chown -R vernemq:vernemq \
@@ -44,12 +42,16 @@
             /var/lib/vernemq \
             /var/log/vernemq
 
+
 # :: Volumes
     VOLUME ["/vernemq/data", "/vernemq/log", "/vernemq/etc", "/vernemq/ssl"]
+
 
 # :: Monitor
     HEALTHCHECK CMD vernemq ping | grep -q pong
 
+
 # :: Start
+    RUN chmod +x /usr/local/bin/entrypoint.sh
     USER vernemq
     ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
