@@ -1,8 +1,13 @@
 #!/bin/ash
-#fix status page errors
-sed -i.bak -r "s/href=\"status\//href=\"\/status\//" /vernemq/lib/vmq_server-$VERNEMQ_VERSION/priv/static/index.html
-sed -i.bak -r "s/src=\"status\//src=\"\/status\//" /vernemq/lib/vmq_server-$VERNEMQ_VERSION/priv/static/index.html
-sed -i.bak -r "s/\/\*\# sourceMappingURL=bootstrap.min.css.map \*\///" /vernemq/lib/vmq_server-$VERNEMQ_VERSION/priv/static/css/bootstrap.min.css
+
+fix_statusPage() {
+    #fix wrong href/src
+    sed -i.bak -r "s/href=\"status\//href=\"\/status\//" /vernemq/lib/vmq_server-$VERNEMQ_VERSION/priv/static/index.html
+    sed -i.bak -r "s/src=\"status\//src=\"\/status\//" /vernemq/lib/vmq_server-$VERNEMQ_VERSION/priv/static/index.html
+
+    #remove file that does not exist
+    sed -i.bak -r "s/\/\*\# sourceMappingURL=bootstrap.min.css.map \*\///" /vernemq/lib/vmq_server-$VERNEMQ_VERSION/priv/static/css/bootstrap.min.css
+}
 
 IP_ADDRESS=$(ip -4 addr show ${NET_INTERFACE} | grep -oE '[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}' | sed -e "s/^[[:space:]]*//" | head -n 1)
 if env | grep "DOCKER_VERNEMQ_NODENAME" -q; then
@@ -47,6 +52,9 @@ sigterm_handler() {
 # Setup OS signal handlers
 trap 'siguser1_handler' SIGUSR1
 trap 'sigterm_handler' SIGTERM
+
+# custom changes
+fix_statusPage
 
 # Start VerneMQ
 /vernemq/bin/vernemq console -noshell -noinput $@ &
