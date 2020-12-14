@@ -1,6 +1,8 @@
 #!/bin/ash
-sed -i.bak -r "s/href=\"status\//href=\"\//" /lib/vmq_server-$VERNEMQ_VERSION/priv/static/index.html
-sed -i.bak -r "s/src=\"status\//src=\"\//" /lib/vmq_server-$VERNEMQ_VERSION/priv/static/index.html
+#fix status page errors
+sed -i.bak -r "s/href=\"status\//href=\"\/status\//" /vernemq/lib/vmq_server-$VERNEMQ_VERSION/priv/static/index.html
+sed -i.bak -r "s/src=\"status\//src=\"\/status\//" /vernemq/lib/vmq_server-$VERNEMQ_VERSION/priv/static/index.html
+sed -i.bak -r "s/\/\*\# sourceMappingURL=bootstrap.min.css.map \*\///" /vernemq/lib/vmq_server-$VERNEMQ_VERSION/priv/static/css/bootstrap.min.css
 
 IP_ADDRESS=$(ip -4 addr show ${NET_INTERFACE} | grep -oE '[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}' | sed -e "s/^[[:space:]]*//" | head -n 1)
 if env | grep "DOCKER_VERNEMQ_NODENAME" -q; then
