@@ -34,6 +34,7 @@
 
     # :: copy root filesystem changes
         COPY ./rootfs /    
+        COPY ./favicon.ico /vernemq/lib/vmq_server-$VERNEMQ_VERSION/priv/static
 
     # :: docker -u 1000:1000 (no root initiative)
         RUN chown -R vernemq:vernemq \
