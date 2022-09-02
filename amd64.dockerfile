@@ -1,6 +1,6 @@
 # :: Header
-    FROM alpine:3.14.1
-    ENV VERNEMQ_VERSION="1.12.1"
+    FROM 11notes/alpine:3.16
+    ENV VERNEMQ_VERSION="1.12.5"
 
 
 # :: Run
