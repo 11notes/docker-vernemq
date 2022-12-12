@@ -14,7 +14,8 @@
                 jq \
                 bash \
                 curl \
-                snappy-dev; \
+                snappy-dev \
+                libcrypto1.1; \
             addgroup --gid 1000 vernemq; \
             adduser --uid 1000 -H -D -G vernemq -h /vernemq vernemq; \
             install -d -o vernemq -g vernemq /vernemq; \
