@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/bin/ash
 
 IP_ADDRESS=$(ip -4 addr show ${NET_INTERFACE} | grep -oE '[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}' | sed -e "s/^[[:space:]]*//" | head -n 1)
 if env | grep "DOCKER_VERNEMQ_NODENAME" -q; then
@@ -15,16 +15,6 @@ else
     sed -i.bak -r '/^-eval/d' /vernemq/etc/vm.args
 fi
 
-/vernemq/bin/vernemq config generate 2>&1 > /dev/null | tee /tmp/config.out | grep error
-
-if [ $? -ne 1 ]; then
-    echo "configuration error, exit"
-    echo "$(cat /tmp/config.out)"
-    exit $?
-fi
-
-pid=0
-
 # SIGUSR1-handler
 siguser1_handler() {
     echo "stopped"
@@ -32,17 +22,17 @@ siguser1_handler() {
 
 # SIGTERM-handler
 sigterm_handler() {
-    if [ $pid -ne 0 ]; then
-        /vernemq/bin/vmq-admin cluster leave node=VerneMQ@${DOCKER_VERNEMQ_NODENAME} -k -i 5 -t 60 > /dev/null
-        /vernemq/bin/vmq-admin node stop > /dev/null
-        kill -s TERM ${pid}
-        exit 0
-    fi
+    /vernemq/bin/vmq-admin cluster leave node=VerneMQ@${DOCKER_VERNEMQ_NODENAME} -k -i 5 -t 60 > /dev/null
+    /vernemq/bin/vmq-admin node stop > /dev/null
+    kill -s TERM ${pid}
+    exit 0
 }
 
 # Setup OS signal handlers
 trap 'siguser1_handler' SIGUSR1
 trap 'sigterm_handler' SIGTERM
+
+/vernemq/bin/vernemq config generate
 
 # Start VerneMQ
 if [ -z "$1" ]; then
