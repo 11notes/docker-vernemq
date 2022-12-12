@@ -2,50 +2,49 @@
     FROM alpine:latest
     ENV VERNEMQ_VERSION="1.12.6.2"
 
-
 # :: Run
     USER root
 
     # :: prepare
-        ENV PATH="/vernemq/bin:$PATH"
-        RUN apk --update --no-cache add \
+        RUN set -ex; \
+            apk --update --no-cache add \
                 ncurses-libs \
                 openssl \
                 libstdc++ \
                 jq \
-                curl \
                 bash \
-                snappy-dev \
-            && addgroup --gid 1000 vernemq \
-            && adduser --uid 1000 -H -D -G vernemq -h /vernemq vernemq \
-            && install -d -o vernemq -g vernemq /vernemq \
-            && mkdir -p /vernemq/ssl/mqtt
+                curl \
+                snappy-dev; \
+            addgroup --gid 1000 vernemq; \
+            adduser --uid 1000 -H -D -G vernemq -h /vernemq vernemq; \
+            install -d -o vernemq -g vernemq /vernemq; \
+            mkdir -p /vernemq/etc; \
+            mkdir -p /vernemq/var; \
+            mkdir -p /vernemq/log;
 
     # :: install
         WORKDIR /vernemq
 
-        ADD https://github.com/vernemq/vernemq/releases/download/$VERNEMQ_VERSION/vernemq-$VERNEMQ_VERSION.alpine.tar.gz /tmp
+        ADD https://github.com/vernemq/vernemq/releases/download/${VERNEMQ_VERSION}/vernemq-${VERNEMQ_VERSION}.alpine.tar.gz /tmp
+        ENV PATH="/vernemq/bin:$PATH"
 
-        RUN tar -xzvf /tmp/vernemq-$VERNEMQ_VERSION.alpine.tar.gz \
-            && rm /tmp/vernemq-$VERNEMQ_VERSION.alpine.tar.gz \
-            && ln -s /vernemq/etc /etc/vernemq \
-            && ln -s /vernemq/data /var/lib/vernemq \
-            && ln -s /vernemq/log /var/log/vernemq
+        RUN set -ex; \
+            tar -xzvf /tmp/vernemq-${VERNEMQ_VERSION}.alpine.tar.gz; \
+            rm /tmp/vernemq-${VERNEMQ_VERSION}.alpine.tar.gz; \
+            ln -s /vernemq/etc /etc/vernemq; \
+            ln -s /vernemq/data /var/lib/vernemq; \
+            ln -s /vernemq/log /var/log/vernemq;
 
     # :: copy root filesystem changes
-        COPY ./rootfs /    
-        COPY ./favicon.ico /vernemq/lib/vmq_server-$VERNEMQ_VERSION/priv/static
+        COPY ./rootfs /
 
     # :: docker -u 1000:1000 (no root initiative)
         RUN chown -R vernemq:vernemq \
-            /vernemq \
-            /etc/vernemq \
-            /var/lib/vernemq \
-            /var/log/vernemq
+            /vernemq;
 
 
 # :: Volumes
-    VOLUME ["/vernemq/data", "/vernemq/log", "/vernemq/etc", "/vernemq/ssl"]
+    VOLUME ["/vernemq/etc", "/vernemq/ssl"]
 
 
 # :: Monitor
