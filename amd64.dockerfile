@@ -1,5 +1,5 @@
 # :: Header
-    FROM 11notes/alpine:latest
+    FROM alpine:latest
     ENV VERNEMQ_VERSION="1.12.6.2"
 
 
