@@ -1,3 +1,5 @@
+${{ image: status.png }}
+
 ${{ content_synopsis }} Run one of the best and most modern MQTT brokers that exists, secured by default. It comes with a changed Redis authentication backend to write unauthenticated clients to the Redis DB for 15 minutes and allows multi-tenancy by using a mountpoint in the form of a FQDN.
 
 ${{ content_uvp }} Good question! All the other images on the market that do exactly the same don’t do or offer these options:
