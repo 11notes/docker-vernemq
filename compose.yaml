@@ -1,0 +1,91 @@
+name: "mqtt"
+services:
+  redis:
+    image: "11notes/redis:7.4.2"
+    environment:
+      REDIS_PASSWORD: ${REDIS_PASSWORD}
+      TZ: "Europe/Zurich"
+    command:
+      - SET client:mqttui@domain.com:mqttui {"mountpoint":"domain.com","passhash":"$$2a$$12$$NZTnKE8a5e8/ey9Li6xwSeF92I0j1Us96jMl2zCESRlapx88u6Wxq","subscribe_acl":[{"pattern":"#"}],"publish_acl":[{"allowed_retain":true,"pattern":"#"}]} NX
+    volumes:
+      - "redis.etc:/redis/etc"
+      - "redis.var:/redis/var"
+    networks:
+      backend:
+    restart: always
+
+  vernemq:
+    depends_on:
+      redis:
+        condition: "service_healthy"
+        restart: true
+    image: "11notes/vernemq:2.1.0"
+    read_only: true
+    environment:
+      TZ: "Europe/Zurich"
+    ports:
+      - "3000:3000/tcp"
+      - "7883:7883/tcp"
+      - "8883:8883/tcp"
+    networks:
+      frontend:
+      backend:
+    volumes:
+      - "etc:/vernemq/etc"
+      - "var:/vernemq/var"
+
+  redis-insight:
+    # demo container to have an UI for the Redis database
+    depends_on:
+      redis:
+        condition: "service_healthy"
+        restart: true
+    image: "11notes/redis-insight:2.58.0"
+    environment:
+      TZ: Europe/Zurich
+    ports:
+      - "3010:5540/tcp"
+    networks:
+      frontend:
+      backend:
+    volumes:
+      - "redis-insight.var:/redis-insight/var"
+    restart: always
+
+  mqtt-web-client:
+    # demo container to access VerneMQ as an MQTT client via internal network
+    depends_on:
+      vernemq:
+        condition: "service_healthy"
+        restart: true
+    image: "terdia07/mqttui"
+    entrypoint: ["/bin/sh","-c"]
+    command:
+      - |
+        sed -i 's/mqttui_{os.getpid()}/{os.getenv('\''MQTT_CLIENT_ID'\'')}/' ./app.py
+        exec gunicorn --worker-class eventlet -w 1 -b "0.0.0.0:5000" app:app
+    environment:
+      TZ: Europe/Zurich
+      MQTT_BROKER: vernemq
+      MQTT_PORT: 1883
+      MQTT_USERNAME: mqttui@domain.com
+      MQTT_PASSWORD: vernemq
+      MQTT_CLIENT_ID: mqttui
+    ports:
+      - "3020:5000/tcp"
+    networks:
+      frontend:
+      backend:
+    restart: always
+
+volumes:
+  etc:
+  var:
+  redis.etc:
+  redis.var:
+  redis-insight.var:
+
+networks:
+  frontend:
+  backend:
+    internal: true

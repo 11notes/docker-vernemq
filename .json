@@ -1,0 +1,17 @@
+{
+  "image": "11notes/vernemq",
+  "name": "vernemq",
+  "root": "/vernemq",
+  "semver": {
+    "version": "2.1.0"
+  },
+  "readme": {
+    "description": "Run VerneMQ rootless and secure by default!",
+    "built": {
+      "vernemq": "https://github.com/vernemq/vernemq"
+    },
+    "comparison": {
+      "image": "vernemq/vernemq:2.1.0-alpine"
+    }
+  }
+}
