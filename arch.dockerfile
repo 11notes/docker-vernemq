@@ -95,8 +95,7 @@
   RUN set -ex; \
     apk --no-cache --update add \
       snappy \
-      ncurses-libs \
-      libstdc++; \
+      ncurses-libs; \
     ln -sf ${APP_ROOT}/data ${APP_ROOT}/var; \
     chmod +x -R /usr/local/bin; \
     chown -R ${APP_UID}:${APP_GID} \
