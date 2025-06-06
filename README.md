@@ -23,12 +23,6 @@ If you value security, simplicity and the ability to interact with the maintaine
 # COMPARISON 🏁
 Below you find a comparison between this image and the most used or original one.
 
-| **image** | 11notes/vernemq:2.1.0 | vernemq/vernemq:2.1.0-alpine |
-| ---: | :---: | :---: |
-| **image size on disk** | 158MB | no image found (provider too slow ...) |
-| **process UID/GID** | 1000/1000 | ?/? |
-| **distroless?** | ❌ | ❌ |
-| **rootless?** | ✅ | ❌ |
 
 
 # VOLUMES 📁
@@ -188,4 +182,4 @@ docker pull quay.io/11notes/vernemq:2.1.0
 # ElevenNotes™️
 This image is provided to you at your own risk. Always make backups before updating an image to a different version. Check the [releases](https://github.com/11notes/docker-vernemq/releases) for breaking changes. If you have any problems with using this image simply raise an [issue](https://github.com/11notes/docker-vernemq/issues), thanks. If you have a question or inputs please create a new [discussion](https://github.com/11notes/docker-vernemq/discussions) instead of an issue. You can find all my other repositories on [github](https://github.com/11notes?tab=repositories).
 
-*created 06.06.2025, 10:55:26 (CET)*
+*created 06.06.2025, 11:21:51 (CET)*
