@@ -11,8 +11,6 @@ ${{ github:> }}* This image is a lot smaller than most other images
 
 If you value security, simplicity and the ability to interact with the maintainer and developer of an image. Using my images is a great start in that direction.
 
-${{ content_comparison }}
-
 ${{ title_volumes }}
 * **${{ json_root }}/etc** - Directory of your configs
 * **${{ json_root }}/var** - Directory of your LevelDB and retained messages
