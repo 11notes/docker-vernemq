@@ -25,7 +25,6 @@ services:
       TZ: "Europe/Zurich"
     ports:
       - "3000:3000/tcp"
-      - "7883:7883/tcp"
       - "8883:8883/tcp"
     networks:
       frontend:
