@@ -5,6 +5,8 @@
 
 Run VerneMQ rootless and secure by default!
 
+![STATUS](https://github.com/11notes/docker-vernemq/blob/master/img/status.png?raw=true)
+
 # SYNOPSIS 📖
 **What can I do with this?** Run one of the best and most modern MQTT brokers that exists, secured by default. It comes with a changed Redis authentication backend to write unauthenticated clients to the Redis DB for 15 minutes and allows multi-tenancy by using a mountpoint in the form of a FQDN.
 
@@ -177,4 +179,4 @@ docker pull quay.io/11notes/vernemq:2.1.0
 # ElevenNotes™️
 This image is provided to you at your own risk. Always make backups before updating an image to a different version. Check the [releases](https://github.com/11notes/docker-vernemq/releases) for breaking changes. If you have any problems with using this image simply raise an [issue](https://github.com/11notes/docker-vernemq/issues), thanks. If you have a question or inputs please create a new [discussion](https://github.com/11notes/docker-vernemq/discussions) instead of an issue. You can find all my other repositories on [github](https://github.com/11notes?tab=repositories).
 
-*created 06.06.2025, 11:33:42 (CET)*
+*created 06.06.2025, 11:45:02 (CET)*
