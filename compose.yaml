@@ -19,7 +19,7 @@ services:
       redis:
         condition: "service_healthy"
         restart: true
-    image: "11notes/vernemq:2.1.0"
+    image: "11notes/vernemq:2.1.1"
     read_only: true
     environment:
       TZ: "Europe/Zurich"
