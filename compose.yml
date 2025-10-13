@@ -1,0 +1,127 @@
+name: "mqtts"
+
+x-lockdown: &lockdown
+  # prevents write access to the image itself
+  read_only: true
+  # prevents any process within the container to gain more privileges
+  security_opt:
+    - "no-new-privileges=true"
+
+services:
+  redis:
+    # for more information about this image checkout:
+    # https://github.com/11notes/docker-redis
+    image: "11notes/redis:8.2.2"
+    <<: *lockdown
+    environment:
+      REDIS_PASSWORD: "${REDIS_PASSWORD}"
+      TZ: "Europe/Zurich"
+    networks:
+      backend:
+    volumes:
+      - "redis.etc:/redis/etc"
+      - "redis.var:/redis/var"
+    tmpfs:
+      - "/run:uid=1000,gid=1000"
+    restart: "always"
+
+  cli:
+    # for more information about this image checkout:
+    # https://github.com/11notes/docker-redis
+    depends_on:
+      redis:
+        condition: "service_healthy"
+        restart: true
+    image: "11notes/redis:8.2.2"
+    <<: *lockdown
+    environment:
+      REDIS_HOST: "redis"
+      REDIS_PASSWORD: "${REDIS_PASSWORD}"
+      TZ: "Europe/Zurich"
+    entrypoint: ["/usr/local/bin/redis", "--cmd"]
+    command: 
+      - SET client:mqttui@domain.com:mqttui {"mountpoint":"domain.com","passhash":"$$2a$$12$$NZTnKE8a5e8/ey9Li6xwSeF92I0j1Us96jMl2zCESRlapx88u6Wxq","subscribe_acl":[{"pattern":"#"}],"publish_acl":[{"allowed_retain":true,"pattern":"#"}]} NX
+    networks:
+      backend:
+
+  vernemq:
+    depends_on:
+      redis:
+        condition: "service_healthy"
+        restart: true
+    image: "11notes/vernemq:2.1.1"
+    <<: *lockdown
+    environment:
+      TZ: "Europe/Zurich"
+    ports:
+      - "3000:3000/tcp"
+      - "8883:8883/tcp"
+    networks:
+      frontend:
+      backend:
+    volumes:
+      - "vernemq.etc:/vernemq/etc"
+      - "vernemq.var:/vernemq/var"
+
+  # ╔═════════════════════════════════════════════════════╗
+  # ║     DEMO CONTAINER - DO NOT USE IN PRODUCTION!      ║
+  # ╚═════════════════════════════════════════════════════╝
+  # used to give an UI for the Redis database
+
+  redis-insight:
+    depends_on:
+      redis:
+        condition: "service_healthy"
+        restart: true
+    image: "redis/redisinsight"
+    environment:
+      RI_REDIS_HOST0: "redis"
+      RI_REDIS_PASSWORD0: "${REDIS_PASSWORD}"
+      TZ: "Europe/Zurich"
+    ports:
+      - "3010:5540/tcp"
+    networks:
+      backend:
+      frontend:
+
+  # ╔═════════════════════════════════════════════════════╗
+  # ║     DEMO CONTAINER - DO NOT USE IN PRODUCTION!      ║
+  # ╚═════════════════════════════════════════════════════╝
+  # web UI to visualize the MQTT messages sent
+
+  mqtt-web-client:
+    depends_on:
+      vernemq:
+        condition: "service_healthy"
+        restart: true
+    image: "terdia07/mqttui"
+    entrypoint: ["/bin/sh","-c"]
+    command:
+      - |
+        sed -i 's/mqttui_{os.getpid()}/{os.getenv('\''MQTT_CLIENT_ID'\'')}/' ./app.py
+        exec gunicorn --worker-class eventlet -w 1 -b "0.0.0.0:5000" app:app
+    environment:
+      TZ: Europe/Zurich
+      MQTT_BROKER: vernemq
+      MQTT_PORT: 1883
+      MQTT_USERNAME: mqttui@domain.com
+      MQTT_PASSWORD: vernemq
+      MQTT_CLIENT_ID: mqttui
+    ports:
+      - "3020:5000/tcp"
+    networks:
+      frontend:
+      backend:
+    restart: always
+
+volumes:
+  vernemq.etc:
+  vernemq.var:
+  redis.etc:
+  redis.var:
+  redis-insight.var:
+
+networks:
+  frontend:
+  backend:
+    internal: true
