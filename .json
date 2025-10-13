@@ -7,6 +7,10 @@
   },
   "readme": {
     "description": "Run VerneMQ rootless and secure by default!",
+    "introduction":"[VerneMQ](https://github.com/vernemq/vernemq) (created by [vernemq](https://github.com/vernemq/)) is a high-performance, distributed MQTT message broker. It scales horizontally and vertically on commodity hardware to support a high number of concurrent publishers and consumers while maintaining low latency and fault tolerance. VerneMQ is the reliable message hub for your IoT platform or smart products.",
+    "parent": {
+      "image": "11notes/alpine:stable"
+    },
     "built": {
       "vernemq": "https://github.com/vernemq/vernemq"
     }
