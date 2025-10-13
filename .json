@@ -3,7 +3,7 @@
   "name": "vernemq",
   "root": "/vernemq",
   "semver": {
-    "version": "2.1.0"
+    "version": "2.1.1"
   },
   "readme": {
     "description": "Run VerneMQ rootless and secure by default!",
