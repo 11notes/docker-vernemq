@@ -5,22 +5,34 @@
 
 Run VerneMQ rootless and secure by default!
 
+# INTRODUCTION 📢
+
+[VerneMQ](https://github.com/vernemq/vernemq) (created by [vernemq](https://github.com/vernemq/)) is a high-performance, distributed MQTT message broker. It scales horizontally and vertically on commodity hardware to support a high number of concurrent publishers and consumers while maintaining low latency and fault tolerance. VerneMQ is the reliable message hub for your IoT platform or smart products.
+
 ![STATUS](https://github.com/11notes/docker-vernemq/blob/master/img/status.png?raw=true)
 
 # SYNOPSIS 📖
 **What can I do with this?** Run one of the best and most modern MQTT brokers that exists, secured by default. It comes with a changed Redis authentication backend to write unauthenticated clients to the Redis DB for 15 minutes and allows multi-tenancy by using a mountpoint in the form of a FQDN.
 
 # UNIQUE VALUE PROPOSITION 💶
-**Why should I run this image and not the other image(s) that already exist?** Good question! All the other images on the market that do exactly the same don’t do or offer these options:
+**Why should I run this image and not the other image(s) that already exist?** Good question! Because ...
 
 > [!IMPORTANT]
->* This image runs as 1000:1000 by default, most other images run everything as root
->* This image is created via a secure, pinned CI/CD process and immune to upstream attacks, most other images have upstream dependencies that can be exploited
->* This image contains a proper health check that verifies the app is actually working, most other images have either no health check or only check if a port is open or ping works
->* This image works as read-only, most other images need to write files to the image filesystem
->* This image is a lot smaller than most other images
+>* ... this image runs [rootless](https://github.com/11notes/RTFM/blob/main/linux/container/image/rootless.md) as 1000:1000
+>* ... this image is auto updated to the latest version via CI/CD
+>* ... this image supports 32bit architecture
+>* ... this image has a health check
+>* ... this image runs read-only
+>* ... this image is automatically scanned for CVEs before and after publishing
+>* ... this image is created via a secure and pinned CI/CD process
+>* ... this image is very small
 
-If you value security, simplicity and the ability to interact with the maintainer and developer of an image. Using my images is a great start in that direction.
+If you value security, simplicity and optimizations to the extreme, then this image might be for you.
+
+# COMPARISON 🏁
+Below you find a comparison between this image and the most used or original one.
+
+
 
 # VOLUMES 📁
 * **/vernemq/etc** - Directory of your configs
@@ -29,21 +41,51 @@ If you value security, simplicity and the ability to interact with the maintaine
 
 # COMPOSE ✂️
 ```yaml
-name: "mqtt"
+name: "mqtts"
+
+x-lockdown: &lockdown
+  # prevents write access to the image itself
+  read_only: true
+  # prevents any process within the container to gain more privileges
+  security_opt:
+    - "no-new-privileges=true"
+
 services:
   redis:
-    image: "11notes/redis:7.4.2"
+    # for more information about this image checkout:
+    # https://github.com/11notes/docker-redis
+    image: "11notes/redis:8.2.2"
+    <<: *lockdown
     environment:
-      REDIS_PASSWORD: ${REDIS_PASSWORD}
+      REDIS_PASSWORD: "${REDIS_PASSWORD}"
       TZ: "Europe/Zurich"
-    command:
-      - SET client:mqttui@domain.com:mqttui {"mountpoint":"domain.com","passhash":"$2a$12$NZTnKE8a5e8/ey9Li6xwSeF92I0j1Us96jMl2zCESRlapx88u6Wxq","subscribe_acl":[{"pattern":"#"}],"publish_acl":[{"allowed_retain":true,"pattern":"#"}]} NX
+    networks:
+      backend:
     volumes:
       - "redis.etc:/redis/etc"
       - "redis.var:/redis/var"
+    tmpfs:
+      - "/run:uid=1000,gid=1000"
+    restart: "always"
+
+  cli:
+    # for more information about this image checkout:
+    # https://github.com/11notes/docker-redis
+    depends_on:
+      redis:
+        condition: "service_healthy"
+        restart: true
+    image: "11notes/redis:8.2.2"
+    <<: *lockdown
+    environment:
+      REDIS_HOST: "redis"
+      REDIS_PASSWORD: "${REDIS_PASSWORD}"
+      TZ: "Europe/Zurich"
+    entrypoint: ["/usr/local/bin/redis", "--cmd"]
+    command: 
+      - SET client:mqttui@domain.com:mqttui {"mountpoint":"domain.com","passhash":"$2a$12$NZTnKE8a5e8/ey9Li6xwSeF92I0j1Us96jMl2zCESRlapx88u6Wxq","subscribe_acl":[{"pattern":"#"}],"publish_acl":[{"allowed_retain":true,"pattern":"#"}]} NX
     networks:
       backend:
-    restart: always
 
   vernemq:
     depends_on:
@@ -51,7 +93,7 @@ services:
         condition: "service_healthy"
         restart: true
     image: "11notes/vernemq:2.1.1"
-    read_only: true
+    <<: *lockdown
     environment:
       TZ: "Europe/Zurich"
     ports:
@@ -61,29 +103,36 @@ services:
       frontend:
       backend:
     volumes:
-      - "etc:/vernemq/etc"
-      - "var:/vernemq/var"
+      - "vernemq.etc:/vernemq/etc"
+      - "vernemq.var:/vernemq/var"
+
+  # ╔═════════════════════════════════════════════════════╗
+  # ║     DEMO CONTAINER - DO NOT USE IN PRODUCTION!      ║
+  # ╚═════════════════════════════════════════════════════╝
+  # used to give an UI for the Redis database
 
   redis-insight:
-    # demo container to have an UI for the Redis database
     depends_on:
       redis:
         condition: "service_healthy"
         restart: true
-    image: "11notes/redis-insight:2.58.0"
+    image: "redis/redisinsight"
     environment:
-      TZ: Europe/Zurich
+      RI_REDIS_HOST0: "redis"
+      RI_REDIS_PASSWORD0: "${REDIS_PASSWORD}"
+      TZ: "Europe/Zurich"
     ports:
       - "3010:5540/tcp"
     networks:
-      frontend:
       backend:
-    volumes:
-      - "redis-insight.var:/redis-insight/var"
-    restart: always
+      frontend:
+
+  # ╔═════════════════════════════════════════════════════╗
+  # ║     DEMO CONTAINER - DO NOT USE IN PRODUCTION!      ║
+  # ╚═════════════════════════════════════════════════════╝
+  # web UI to visualize the MQTT messages sent
 
   mqtt-web-client:
-    # demo container to access VerneMQ as an MQTT client via internal network
     depends_on:
       vernemq:
         condition: "service_healthy"
@@ -109,8 +158,8 @@ services:
     restart: always
 
 volumes:
-  etc:
-  var:
+  vernemq.etc:
+  vernemq.var:
   redis.etc:
   redis.var:
   redis-insight.var:
@@ -120,6 +169,7 @@ networks:
   backend:
     internal: true
 ```
+To find out how you can change the default UID/GID of this container image, consult the [how-to.changeUIDGID](https://github.com/11notes/RTFM/blob/main/linux/container/image/11notes/how-to.changeUIDGID.md#change-uidgid-the-correct-way) section of my [RTFM](https://github.com/11notes/RTFM)
 
 # DEFAULT SETTINGS 🗃️
 | Parameter | Value | Description |
@@ -156,7 +206,7 @@ docker pull quay.io/11notes/vernemq:2.1.1
 * [11notes/vernemq](https://github.com/11notes/docker-VERNEMQ)
 
 # PARENT IMAGE 🏛️
-* [${{ json_readme_parent_image }}](${{ json_readme_parent_url }})
+* [11notes/alpine:stable](https://hub.docker.com/r/11notes/alpine)
 
 # BUILT WITH 🧰
 * [vernemq](https://github.com/vernemq/vernemq)
@@ -173,9 +223,8 @@ docker pull quay.io/11notes/vernemq:2.1.1
 > [!CAUTION]
 >* This image is shipped with default SSL certificates that were generated during the container build process. Please provide your own SSL certificates
 >* The compose example has a default Redis ACL for the client ```mqttui@domain.com```, please create your own compose and do not copy/paste blindly
->* The compose example has two additional containers for demo purposes, please create your own compose and do not copy/paste blindly
 
 # ElevenNotes™️
 This image is provided to you at your own risk. Always make backups before updating an image to a different version. Check the [releases](https://github.com/11notes/docker-vernemq/releases) for breaking changes. If you have any problems with using this image simply raise an [issue](https://github.com/11notes/docker-vernemq/issues), thanks. If you have a question or inputs please create a new [discussion](https://github.com/11notes/docker-vernemq/discussions) instead of an issue. You can find all my other repositories on [github](https://github.com/11notes?tab=repositories).
 
-*created 15.07.2025, 07:36:22 (CET)*
+*created 14.10.2025, 01:04:36 (CET)*
