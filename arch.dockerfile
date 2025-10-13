@@ -1,20 +1,22 @@
 # ╔═════════════════════════════════════════════════════╗
 # ║                       SETUP                         ║
 # ╚═════════════════════════════════════════════════════╝
-  # GLOBAL
+# :: GLOBAL
   ARG APP_UID=1000 \
       APP_GID=1000 \
       BUILD_ROOT=/vernemq
 
-  # :: FOREIGN IMAGES
+# :: FOREIGN IMAGES
   FROM 11notes/util AS util
+  FROM 11notes/util:bin AS util-bin
+  FROM 11notes/distroless:localhealth AS distroless-localhealth
 
 # ╔═════════════════════════════════════════════════════╗
 # ║                       BUILD                         ║
 # ╚═════════════════════════════════════════════════════╝
   FROM alpine AS build
 
-  COPY --from=util /usr/local/bin /usr/local/bin
+  COPY --from=util-bin / /
 
   ARG TARGETPLATFORM \
       TARGETOS \
@@ -38,11 +40,10 @@
       openssl-dev \
       libstdc++-dev  \
       ncurses-libs \
-      upx \
       build-base;
 
   RUN set -ex; \
-    git clone https://github.com/vernemq/vernemq.git -b ${APP_VERSION};
+    eleven git clone vernemq/vernemq.git ${APP_VERSION};
 
   RUN set -ex; \
     cd ${BUILD_ROOT}; \
@@ -86,13 +87,16 @@
     ENV DOCKER_VERNEMQ_ACCEPT_EULA="yes"
 
   # :: multi-stage
-    COPY --from=util /usr/local/bin /usr/local/bin
+    COPY --from=util / /
+    COPY --from=distroless-localhealth / /
     COPY --from=build ${BUILD_ROOT}/_build/default/rel/vernemq/ ${APP_ROOT}
     COPY --chown=${APP_UID}:${APP_GID} ./rootfs /
 
 # :: RUN
   USER root
   RUN set -ex; \
+    apk --no-cache --update --virtual .tmp add \
+      cmd:usermod; \
     apk --no-cache --update add \
       snappy \
       ncurses-libs; \
@@ -100,14 +104,16 @@
     chmod +x -R /usr/local/bin; \
     chown -R ${APP_UID}:${APP_GID} \
       ${APP_ROOT}; \
-    usermod -d ${APP_ROOT}/data $(getent passwd ${APP_UID} | cut -d: -f1);
+    usermod -d ${APP_ROOT}/data $(getent passwd ${APP_UID} | cut -d: -f1); \
+    apk del --no-network .tmp;
 
 # :: PERSISTENT DATA
   VOLUME ["${APP_ROOT}/etc", "${APP_ROOT}/var"]
 
 # :: HEALTH
   HEALTHCHECK --interval=5s --timeout=2s --start-interval=5s \
-    CMD ["curl", "-kILs", "--fail", "-o", "/dev/null", "http://localhost:8080/health/listeners"]
+    CMD ["/usr/local/bin/localhealth", "http://127.0.0.1:8080/health/listeners", "-I"]
 
 # :: EXECUTE
   USER ${APP_UID}:${APP_GID}
+  ENTRYPOINT ["/usr/local/bin/tini", "--", "/usr/local/bin/entrypoint.sh"]
