@@ -2,16 +2,21 @@ ${{ image: status.png }}
 
 ${{ content_synopsis }} Run one of the best and most modern MQTT brokers that exists, secured by default. It comes with a changed Redis authentication backend to write unauthenticated clients to the Redis DB for 15 minutes and allows multi-tenancy by using a mountpoint in the form of a FQDN.
 
-${{ content_uvp }} Good question! All the other images on the market that do exactly the same don’t do or offer these options:
+${{ content_uvp }} Good question! Because ...
 
 ${{ github:> [!IMPORTANT] }}
-${{ github:> }}* This image runs as 1000:1000 by default, most other images run everything as root
-${{ github:> }}* This image is created via a secure, pinned CI/CD process and immune to upstream attacks, most other images have upstream dependencies that can be exploited
-${{ github:> }}* This image contains a proper health check that verifies the app is actually working, most other images have either no health check or only check if a port is open or ping works
-${{ github:> }}* This image works as read-only, most other images need to write files to the image filesystem
-${{ github:> }}* This image is a lot smaller than most other images
+${{ github:> }}* ... this image runs [rootless](https://github.com/11notes/RTFM/blob/main/linux/container/image/rootless.md) as 1000:1000
+${{ github:> }}* ... this image is auto updated to the latest version via CI/CD
+${{ github:> }}* ... this image supports 32bit architecture
+${{ github:> }}* ... this image has a health check
+${{ github:> }}* ... this image runs read-only
+${{ github:> }}* ... this image is automatically scanned for CVEs before and after publishing
+${{ github:> }}* ... this image is created via a secure and pinned CI/CD process
+${{ github:> }}* ... this image is very small
 
-If you value security, simplicity and the ability to interact with the maintainer and developer of an image. Using my images is a great start in that direction.
+If you value security, simplicity and optimizations to the extreme, then this image might be for you.
+
+${{ content_comparison }}
 
 ${{ title_volumes }}
 * **${{ json_root }}/etc** - Directory of your configs
@@ -38,4 +43,3 @@ ${{ title_caution }}
 ${{ github:> [!CAUTION] }}
 ${{ github:> }}* This image is shipped with default SSL certificates that were generated during the container build process. Please provide your own SSL certificates
 ${{ github:> }}* The compose example has a default Redis ACL for the client ```mqttui@domain.com```, please create your own compose and do not copy/paste blindly
-${{ github:> }}* The compose example has two additional containers for demo purposes, please create your own compose and do not copy/paste blindly
