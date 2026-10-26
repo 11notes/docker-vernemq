@@ -14,5 +14,7 @@
     "built": {
       "vernemq": "https://github.com/vernemq/vernemq"
     }
-  }
+  },
+  "unraid": true,
+  "nobody": true
 }
