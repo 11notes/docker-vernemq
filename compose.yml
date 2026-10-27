@@ -40,7 +40,7 @@ services:
       TZ: "Europe/Zurich"
     entrypoint: ["/usr/local/bin/redis", "--cmd"]
     command: 
-      - SET client:mqttui@domain.com:mqttui {"mountpoint":"domain.com","passhash":"$$2a$$12$$NZTnKE8a5e8/ey9Li6xwSeF92I0j1Us96jMl2zCESRlapx88u6Wxq","subscribe_acl":[{"pattern":"#"}],"publish_acl":[{"allowed_retain":true,"pattern":"#"}]} NX
+      - SET client:mqttui@domain.com:mqttui {"mountpoint":"domain.com","passhash":"$$2a$$12$$ryOvzk0DgJTThOX.fdJpg.K0H7Afs3CikKCg4h5Ll1Zgd3wiSThky","subscribe_acl":[{"pattern":"#"}],"publish_acl":[{"allowed_retain":true,"pattern":"#"}]} NX
     networks:
       backend:
 
@@ -95,18 +95,17 @@ services:
         condition: "service_healthy"
         restart: true
     image: "terdia07/mqttui"
-    entrypoint: ["/bin/sh","-c"]
-    command:
-      - |
-        sed -i 's/mqttui_{os.getpid()}/{os.getenv('\''MQTT_CLIENT_ID'\'')}/' ./app.py
-        exec gunicorn --worker-class eventlet -w 1 -b "0.0.0.0:5000" app:app
     environment:
       TZ: Europe/Zurich
       MQTT_BROKER: vernemq
       MQTT_PORT: 1883
-      MQTT_USERNAME: mqttui@domain.com
-      MQTT_PASSWORD: vernemq
+      MQTT_USERNAME: "mqttui@domain.com"
+      MQTT_PASSWORD: "mqttui"
+      MQTT_TOPICS: "#"
+      MQTTUI_ADMIN_USER: mqttui@domain.com
+      MQTTUI_ADMIN_PASSWORD: vernemq
       MQTT_CLIENT_ID: mqttui
+      LOG_LEVEL: "warning"
     ports:
       - "3020:5000/tcp"
     networks:

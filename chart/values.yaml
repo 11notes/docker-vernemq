@@ -1,0 +1,62 @@
+image:
+  repository: 11notes/netbird
+  tag: ""
+  pullPolicy: IfNotPresent
+
+replicaCount: 1
+nameOverride: ""
+fullnameOverride: ""
+timezone: ""
+
+extraEnv: []
+
+service:
+  type: ClusterIP
+  ports:
+    mqtts: 8883
+    ui: 8888
+  annotations: {}
+
+containerSecurityContext:
+  runAsUser: 1000
+  runAsGroup: 1000
+  allowPrivilegeEscalation: false
+  readOnlyRootFilesystem: true
+
+resources: {}
+nodeSelector: {}
+tolerations: []
+affinity: {}
+podAnnotations: {}
+podLabels: {}
+
+persistence:
+  vernemq:
+    enabled: true
+    existingClaim: ""
+    storageClass: ""
+    accessModes:
+      - ReadWriteOnce
+    size: 16Gi
+
+secretMounts:
+  - name: ""
+    secretName: ""
+
+readinessProbe:
+  exec:
+    command:
+      - localhealth
+      - http://127.0.0.1:8080/health/listeners
+  periodSeconds: 10
+  timeoutSeconds: 5
+  failureThreshold: 6
+
+livenessProbe:
+  exec:
+    command:
+      - localhealth
+      - http://127.0.0.1:8080/health/listeners
+  periodSeconds: 10
+  timeoutSeconds: 5
+  failureThreshold: 6
