@@ -35,7 +35,7 @@ variable "mqtts_ingress_ip" {
   type = string
 
   validation {
-    condition = can(cidrhost("${var.ip_address}/32", 0))
+    condition = can(cidrhost("${var.mqtts_ingress_ip}/32", 0))
     error_message = "mqtts_ingress_ip must be a valid IPv4 address, e.g. 192.168.1.10."
   }
 }
@@ -133,17 +133,18 @@ resource "helm_release" "vernemq" {
   repository = "oci://ghcr.io/11notes/charts"
   chart = "vernemq"
   namespace = "vernemq"
-  version = "1.0.0"
+  version = "0.0.1"
 
   wait = true
   wait_for_jobs = true
 
   values = [
     yamlencode({
-      secretMounts = {
-        name = local.domain
-        secretName = local.domain
-      }
+      secretMounts = [
+        {
+          secretName = local.domain
+        }
+      ]
       redis = {
         secretName = "redis-password"
       }

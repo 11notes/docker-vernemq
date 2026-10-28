@@ -1,5 +1,5 @@
 image:
-  repository: 11notes/netbird
+  repository: 11notes/vernemq
   tag: ""
   pullPolicy: IfNotPresent
 
@@ -38,7 +38,7 @@ persistence:
     size: 16Gi
 
 secretMounts:
-  - name: ""
+  - name: "tls"
     secretName: ""
 
 readinessProbe:
