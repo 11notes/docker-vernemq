@@ -19,9 +19,9 @@ const (
 )
 
 var (
-	reName     = regexp.MustCompile(`-name VerneMQ@.+`)
-	reCookie   = regexp.MustCompile(`-setcookie .+`)
-	reEval     = regexp.MustCompile(`-eval.+`)
+	reName = regexp.MustCompile(`-name VerneMQ@.+`)
+	reCookie = regexp.MustCompile(`-setcookie .+`)
+	reEval = regexp.MustCompile(`-eval.+`)
 	reEvalLine = regexp.MustCompile(`(?m)^-eval.*\n?`)
 )
 
