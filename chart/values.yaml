@@ -17,18 +17,16 @@ service:
     ui: 8888
   annotations: {}
 
+redis:
+  service: "redis"
+  port: 6379
+  secretName: ""
+
 containerSecurityContext:
   runAsUser: 1000
   runAsGroup: 1000
   allowPrivilegeEscalation: false
   readOnlyRootFilesystem: true
-
-resources: {}
-nodeSelector: {}
-tolerations: []
-affinity: {}
-podAnnotations: {}
-podLabels: {}
 
 persistence:
   vernemq:
@@ -60,3 +58,10 @@ livenessProbe:
   periodSeconds: 10
   timeoutSeconds: 5
   failureThreshold: 6
+
+resources: {}
+nodeSelector: {}
+tolerations: []
+affinity: {}
+podAnnotations: {}
+podLabels: {}

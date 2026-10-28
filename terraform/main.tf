@@ -46,6 +46,11 @@ variable "mqtts_ingress_ip_share" {
   nullable = true
 }
 
+variable "redis_password" {
+  type = string
+  sensitive = true
+}
+
 locals {
   fqdn = trimspace(var.fqdn)
   ip = trimspace(var.mqtts_ingress_ip)
@@ -53,6 +58,26 @@ locals {
   _fqdn_split = split(".", local.fqdn)
   hostname = local._fqdn_split[0]
   domain = join(".", slice(local._fqdn_split, 1, length(local._fqdn_split)))
+  redis_password = trimspace(var.redis_password)
+}
+
+resource "kubernetes_namespace_v1" "redis_namespace" {
+  metadata {
+    name = "vernemq"
+  }
+}
+
+resource "kubernetes_secret_v1" "redis_password" {
+  metadata {
+    name = "redis-password"
+    namespace = "vernemq"
+  }
+
+  data = {
+    REDIS_PASSWORD = local.redis_password
+  }
+
+  type = "Opaque"
 }
 
 resource "kubernetes_manifest" "vernemq_wildcard_cert" {
@@ -78,12 +103,37 @@ resource "kubernetes_manifest" "vernemq_wildcard_cert" {
   }
 }
 
+resource "helm_release" "redis" {
+  name = "redis"
+  repository = "oci://ghcr.io/11notes/charts"
+  chart = "redis"
+  namespace = "vernemq"
+  version = "1.0.3"
+
+  wait = true
+  wait_for_jobs = true
+  timeout = 300
+
+  values = [
+    yamlencode({
+      redis = {
+        secret = "redis-password"
+      }
+      persistence = {
+        redis = {
+          size = "2Gi"
+        }
+      }
+    })
+  ]
+}
+
 resource "helm_release" "vernemq" {
   name = "vernemq"
   repository = "oci://ghcr.io/11notes/charts"
   chart = "vernemq"
   namespace = "vernemq"
-  version = "0.0.1"
+  version = "1.0.0"
 
   wait = true
   wait_for_jobs = true
@@ -94,8 +144,13 @@ resource "helm_release" "vernemq" {
         name = local.domain
         secretName = local.domain
       }
+      redis = {
+        secretName = "redis-password"
+      }
     })
   ]
+
+  depends_on = [helm_release.redis]
 }
 
 resource "kubernetes_service_v1" "vernemq_ingress_mqtts" {

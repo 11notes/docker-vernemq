@@ -38,20 +38,27 @@ spec:
             runAsUser: 0
         - name: chown
           image: "11notes/k8s-init"
-          imagePullPolicy: Always
+          imagePullPolicy: "Always"
+          env:
+            - name: REDIS_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.redis.secretName | quote }}
+                  key: "REDIS_PASSWORD"
           command:
             - sh
             - -c
             - |
-              mkdir -p /vernemq/etc
-              mkdir -p /vernemq/var
-              eleven k8s chown /vernemq {{ .Values.containerSecurityContext.runAsUser | default 1000 }} {{ .Values.containerSecurityContext.runAsGroup | default 1000 }}
-              eleven k8s chown /opt/vernemq {{ .Values.containerSecurityContext.runAsUser | default 1000 }} {{ .Values.containerSecurityContext.runAsGroup | default 1000 }}
-              chmod 0750 -R /vernemq
+              mkdir -p /pvc/vernemq/etc
+              mkdir -p /pvc/vernemq/var
+              eleven k8s chown /pvc {{ .Values.containerSecurityContext.runAsUser | default 1000 }} {{ .Values.containerSecurityContext.runAsGroup | default 1000 }}
+              eleven k8s chown /opt {{ .Values.containerSecurityContext.runAsUser | default 1000 }} {{ .Values.containerSecurityContext.runAsGroup | default 1000 }}
+              chmod 0750 -R /pvc/vernemq
               chmod 0750 -R /opt/vernemq
+              eleven k8s wait redis {{ .Values.redis.service }} {{ .Values.redis.port }} ${REDIS_PASSWORD}
           volumeMounts:
             - name: vernemq
-              mountPath: /vernemq
+              mountPath: /pvc/vernemq
           securityContext:
             runAsUser: 0
       containers:
@@ -63,6 +70,15 @@ spec:
           env:
             - name: TZ
               value: {{ .Values.timezone | default "Europe/Zurich" | quote }}
+            - name: REDIS_HOST
+              value: {{ .Values.redis.service | quote }}
+            - name: REDIS_PORT
+              value: {{ .Values.redis.port | quote }}
+            - name: REDIS_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.redis.secretName | quote }}
+                  key: "REDIS_PASSWORD"
             {{- with .Values.extraEnv }}
             {{- toYaml . | nindent 12 }}
             {{- end }}
