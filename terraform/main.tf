@@ -35,13 +35,21 @@ variable "mqtts_ingress_ip" {
   type = string
 
   validation {
-    condition     = can(cidrhost("${var.ip_address}/32", 0))
+    condition = can(cidrhost("${var.ip_address}/32", 0))
     error_message = "mqtts_ingress_ip must be a valid IPv4 address, e.g. 192.168.1.10."
   }
 }
 
+variable "mqtts_ingress_ip_share" {
+  type = string
+  default = null
+  nullable = true
+}
+
 locals {
   fqdn = trimspace(var.fqdn)
+  ip = trimspace(var.mqtts_ingress_ip)
+  ip_share = trimspace(var.mqtts_ingress_ip_share)
   _fqdn_split = split(".", local.fqdn)
   hostname = local._fqdn_split[0]
   domain = join(".", slice(local._fqdn_split, 1, length(local._fqdn_split)))
@@ -94,9 +102,14 @@ resource "kubernetes_service_v1" "vernemq_ingress_mqtts" {
   metadata {
     name = "vernemq-ingress-mqtts"
     namespace = "vernemq"
-    annotations = {
-      "metallb.io/loadBalancerIPs" = "{trimspace(var.mqtts_ingress_ip)}"
-    }
+    annotations = merge(
+      {
+        "metallb.io/loadBalancerIPs" = local.ip
+      },
+      local.ip_share != null ? {
+        "metallb.io/allow-shared-ip" = local.ip_share
+      } : {}
+    )
   }
   spec {
     type = "LoadBalancer"
