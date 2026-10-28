@@ -2,7 +2,7 @@ apiVersion: v2
 name: vernemq
 description: run vernemq rootless on k8s
 type: application
-version: 0.0.2
+version: 0.0.3
 appVersion: 2.2.1
 home: https://github.com/11notes/docker-vernemq
 sources:

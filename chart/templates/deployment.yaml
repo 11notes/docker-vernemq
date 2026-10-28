@@ -28,7 +28,7 @@ spec:
       initContainers:
         - name: pvc-copy
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
-          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          imagePullPolicy: "Always"
           args: 
             - "--pvc-copy"
           volumeMounts:
