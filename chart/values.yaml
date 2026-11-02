@@ -14,7 +14,7 @@ service:
   type: ClusterIP
   ports:
     mqtts: 8883
-    ui: 8888
+    ui: 9090
   annotations: {}
 
 redis:

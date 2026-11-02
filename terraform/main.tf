@@ -133,7 +133,7 @@ resource "helm_release" "vernemq" {
   repository = "oci://ghcr.io/11notes/charts"
   chart = "vernemq"
   namespace = "vernemq"
-  version = "0.0.1"
+  version = "0.0.3"
 
   wait = true
   wait_for_jobs = true
@@ -142,6 +142,7 @@ resource "helm_release" "vernemq" {
     yamlencode({
       secretMounts = [
         {
+          name = "tls"
           secretName = local.domain
         }
       ]
@@ -196,12 +197,12 @@ resource "kubernetes_ingress_v1" "vernemq_ingress_ui" {
     ingress_class_name = "traefik"
 
     tls {
-      hosts = [local.fqdn]
+      hosts = ["${local.hostname}-ui.${local.domain}"]
       secret_name = local.domain
     }
 
     rule {
-      host = local.fqdn
+      host = "${local.hostname}-ui.${local.domain}"
       http {
         path {
           path = "/"
@@ -210,7 +211,7 @@ resource "kubernetes_ingress_v1" "vernemq_ingress_ui" {
             service {
               name = "vernemq"
               port {
-                number = 8888
+                number = 9090
               }
             }
           }

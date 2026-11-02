@@ -87,7 +87,7 @@ spec:
               containerPort: 8883
               protocol: TCP
             - name: ui
-              containerPort: 8888
+              containerPort: 9090
               protocol: TCP
           {{- with .Values.startupProbe }}
           startupProbe:
