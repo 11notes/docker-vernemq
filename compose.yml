@@ -54,7 +54,7 @@ services:
     environment:
       TZ: "Europe/Zurich"
     ports:
-      - "3000:3000/tcp"
+      - "3000:9090/tcp"
       - "8883:8883/tcp"
     networks:
       frontend:
