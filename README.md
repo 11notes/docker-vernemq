@@ -1,7 +1,7 @@
 ![banner](https://raw.githubusercontent.com/11notes/static/refs/heads/master/img/banner/README.png)
 
 # VERNEMQ
-![size](https://img.shields.io/badge/image_size-289MB-green?color=%2338ad2d)![5px](https://raw.githubusercontent.com/11notes/static/refs/heads/master/img/markdown/transparent5x2px.png)![pulls](https://img.shields.io/docker/pulls/11notes/vernemq?color=2b75d6)![5px](https://raw.githubusercontent.com/11notes/static/refs/heads/master/img/markdown/transparent5x2px.png)[<img src="https://img.shields.io/github/issues/11notes/docker-vernemq?color=7842f5">](https://github.com/11notes/docker-vernemq/issues)![5px](https://raw.githubusercontent.com/11notes/static/refs/heads/master/img/markdown/transparent5x2px.png)![swiss_made](https://img.shields.io/badge/Swiss_Made-FFFFFF?labelColor=FF0000&logo=data:image/svg%2bxml;base64,PHN2ZyB2ZXJzaW9uPSIxIiB3aWR0aD0iNTEyIiBoZWlnaHQ9IjUxMiIgdmlld0JveD0iMCAwIDMyIDMyIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPgogIDxyZWN0IHdpZHRoPSIzMiIgaGVpZ2h0PSIzMiIgZmlsbD0idHJhbnNwYXJlbnQiLz4KICA8cGF0aCBkPSJtMTMgNmg2djdoN3Y2aC03djdoLTZ2LTdoLTd2LTZoN3oiIGZpbGw9IiNmZmYiLz4KPC9zdmc+)
+![size](https://img.shields.io/badge/image_size-297MB-green?color=%2338ad2d)![5px](https://raw.githubusercontent.com/11notes/static/refs/heads/master/img/markdown/transparent5x2px.png)![pulls](https://img.shields.io/docker/pulls/11notes/vernemq?color=2b75d6)![5px](https://raw.githubusercontent.com/11notes/static/refs/heads/master/img/markdown/transparent5x2px.png)[<img src="https://img.shields.io/github/issues/11notes/docker-vernemq?color=7842f5">](https://github.com/11notes/docker-vernemq/issues)![5px](https://raw.githubusercontent.com/11notes/static/refs/heads/master/img/markdown/transparent5x2px.png)![swiss_made](https://img.shields.io/badge/Swiss_Made-FFFFFF?labelColor=FF0000&logo=data:image/svg%2bxml;base64,PHN2ZyB2ZXJzaW9uPSIxIiB3aWR0aD0iNTEyIiBoZWlnaHQ9IjUxMiIgdmlld0JveD0iMCAwIDMyIDMyIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPgogIDxyZWN0IHdpZHRoPSIzMiIgaGVpZ2h0PSIzMiIgZmlsbD0idHJhbnNwYXJlbnQiLz4KICA8cGF0aCBkPSJtMTMgNmg2djdoN3Y2aC03djdoLTZ2LTdoLTd2LTZoN3oiIGZpbGw9IiNmZmYiLz4KPC9zdmc+)
 
 Run VerneMQ rootless and secure by default!
 
@@ -34,7 +34,7 @@ Below you find a comparison between this image and the most used or original one
 
 | **image** | **size on disk** | **init default as** | **[distroless](https://github.com/11notes/RTFM/blob/main/linux/container/image/distroless.md)** | supported architectures
 | ---: | ---: | :---: | :---: | :---: |
-| 11notes/vernemq | 289MB | 1000:1000 | ❌ | amd64, arm64, armv7 |
+| 11notes/vernemq | 297MB | 1000:1000 | ❌ | amd64, arm64, armv7 |
 
 # VOLUMES 📁
 * **/vernemq/etc** - Directory of your configs
@@ -85,7 +85,7 @@ services:
       TZ: "Europe/Zurich"
     entrypoint: ["/usr/local/bin/redis", "--cmd"]
     command: 
-      - SET client:mqttui@domain.com:mqttui {"mountpoint":"domain.com","passhash":"$2a$12$NZTnKE8a5e8/ey9Li6xwSeF92I0j1Us96jMl2zCESRlapx88u6Wxq","subscribe_acl":[{"pattern":"#"}],"publish_acl":[{"allowed_retain":true,"pattern":"#"}]} NX
+      - SET client:mqttui@domain.com:mqttui {"mountpoint":"domain.com","passhash":"$2a$12$ryOvzk0DgJTThOX.fdJpg.K0H7Afs3CikKCg4h5Ll1Zgd3wiSThky","subscribe_acl":[{"pattern":"#"}],"publish_acl":[{"allowed_retain":true,"pattern":"#"}]} NX
     networks:
       backend:
 
@@ -99,7 +99,7 @@ services:
     environment:
       TZ: "Europe/Zurich"
     ports:
-      - "3000:3000/tcp"
+      - "3000:9090/tcp"
       - "8883:8883/tcp"
     networks:
       frontend:
@@ -140,18 +140,17 @@ services:
         condition: "service_healthy"
         restart: true
     image: "terdia07/mqttui"
-    entrypoint: ["/bin/sh","-c"]
-    command:
-      - |
-        sed -i 's/mqttui_{os.getpid()}/{os.getenv('\''MQTT_CLIENT_ID'\'')}/' ./app.py
-        exec gunicorn --worker-class eventlet -w 1 -b "0.0.0.0:5000" app:app
     environment:
       TZ: Europe/Zurich
       MQTT_BROKER: vernemq
       MQTT_PORT: 1883
-      MQTT_USERNAME: mqttui@domain.com
-      MQTT_PASSWORD: vernemq
+      MQTT_USERNAME: "mqttui@domain.com"
+      MQTT_PASSWORD: "mqttui"
+      MQTT_TOPICS: "#"
+      MQTTUI_ADMIN_USER: mqttui@domain.com
+      MQTTUI_ADMIN_PASSWORD: vernemq
       MQTT_CLIENT_ID: mqttui
+      LOG_LEVEL: "warning"
     ports:
       - "3020:5000/tcp"
     networks:
@@ -229,4 +228,4 @@ docker pull quay.io/11notes/vernemq:2.2.1
 # ElevenNotes™️
 This image is provided to you at your own risk. Always make backups before updating an image to a different version. Check the [releases](https://github.com/11notes/docker-vernemq/releases) for breaking changes. If you have any problems with using this image simply raise an [issue](https://github.com/11notes/docker-vernemq/issues), thanks. If you have a question or inputs please create a new [discussion](https://github.com/11notes/docker-vernemq/discussions) instead of an issue. You can find all my other repositories on [github](https://github.com/11notes?tab=repositories).
 
-*created 26.10.2026, 11:34:53 (CET)*
+*created 16.11.2026, 20:58:28 (CET)*
