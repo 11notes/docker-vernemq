@@ -60,6 +60,7 @@
 
   RUN set -ex; \
     cd ${BUILD_ROOT}; \
+    ./rebar3 get-deps; \
     make rel -s -j $(nproc) || echo "leveldb pull error, retry"; \
     make rel -s -j $(nproc);
 
